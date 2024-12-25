@@ -1,0 +1,367 @@
+CODE EXPLANATION 
+
+ 
+
+GITHUB REPOSITORIES 
+
+1. Constants 
+
+const form = document.getElementById("form"); 
+
+const userSearched = document.getElementById("search"); 
+
+const main = document.getElementById("main");  
+//APIURL is the base URL of the GitHub API used to fetch user profiles and their repositories. 
+//These lines select HTML elements from the DOM: 
+
+-form: The form element in which the user will input a username. 
+
+-userSearched: The input field where the user types the GitHub username. 
+
+-main: The main section of the page where user profile details or errors will be displayed. 
+
+ 
+
+2. Fetching a User 
+
+function getUser(username) { 
+
+  axios.get(APIURL + username) 
+
+    .then(response => { 
+
+      createUserCard(response.data); 
+
+      const data = response.data;  
+
+      console.log("Data Received:", data);  
+
+ 
+
+      return getRepos(username) 
+
+        .then(reposResponse => { 
+
+          const infoRepos = reposResponse.data;  
+
+          console.log("Repos Received:", infoRepos);  
+
+        }); 
+
+    }) 
+
+    .catch(error => {  
+
+      console.log("State: rejected");  
+
+      if (error.response) {  
+
+      console.log('Connection failed/not found'); { 
+
+      createErrorCard("No profile with this username"); 
+
+    } 
+
+  }  
+
+});  
+
+}  
+
+//Purpose: This function fetches data about a GitHub user. 
+
+axios.get(APIURL + username): Sends a GET request to https://api.github.com/users/{username} to fetch user data. 
+
+.then(response => { ... }): If the request is successful: 
+
+The user's data is passed to createUserCard to display their profile. 
+
+getRepos(username) is called to fetch the user's repositories. 
+
+.catch(err => { ... }): If the request fails (e.g., user not found), it: 
+
+Checks if the error code is 404 (user not found). 
+
+Calls createErrorCard to display an error message. 
+
+ 
+
+3. Fetching Repositories 
+
+function getRepos(username) { 
+
+  return axios.get(APIURL + username + "/repos?sort=created") 
+
+    .then(response => { 
+
+      addReposToCard(response.data); 
+
+  }) 
+
+    .catch(() => { 
+
+      createErrorCard("Problem fetching repos"); 
+
+  }); 
+
+} 
+
+//Purpose: This function fetches the repositories of the user. 
+
+axios.get(APIURL + username + "/repos?sort=created"): Sends a GET request to fetch the user's repositories, sorted by creation date. The "/repos?sort=created" is part of the GitHub API URL query used to fetch a user's repositories. 
+
+.then(response => { ... }): If successful: 
+
+Passes the repository data to addReposToCard to display them. 
+
+.catch(() => { ... }): If there's an error, it calls createErrorCard to display an error message. 
+
+ 
+
+4. Displaying User Information 
+
+function createUserCard(user) { 
+
+  const userID = user.name || user.login; 
+
+  const userBio = user.bio ? `<p>${user.bio}</p>` : ""; 
+
+  const cardHTML = ` 
+
+  <div class="card"> 
+
+     <div> 
+
+        <img src="${user.avatar_url}" alt="${user.name}" class="avatar"> 
+
+     </div> 
+
+      <div class="user-info"> 
+
+          <h2>${userID}</h2> 
+
+          ${userBio} 
+
+            <ul> 
+
+              <li>${user.followers} <strong>Followers</strong></li> 
+
+              <li>${user.following} <strong>Following</strong></li> 
+
+              <li>${user.public_repos} <strong>Repos</strong></li> 
+
+            </ul> 
+
+          <div id="repos"></div> 
+
+      </div> 
+
+  </div> 
+
+ `; 
+
+  main.innerHTML = cardHTML; 
+
+ }  
+
+//Purpose: This function creates and displays the user's profile card. 
+
+user.name || user.login: If the user has a real name, use it; otherwise, use their GitHub username. 
+
+user.bio: If the user has a bio, display it; otherwise, display nothing. The dollar sign ($) and backticks (```) are used in JavaScript to create template literals, a modern way to handle strings introduced in ES6.  
+
+The dollar sign is used inside a template literal to embed expressions within a string. This is done by using the ${} syntax, where any JavaScript expression inside the curly braces is evaluated, and its result is included in the string.  
+
+Backticks are used to create template literals, which are more versatile than traditional strings (' or "): 
+
+They allow multi-line strings without the need for escape characters. 
+
+They support interpolation (embedding variables and expressions) with ${}. 
+
+They can span across lines without breaking syntax. 
+
+ 
+
+cardHTML: A block of HTML that includes: 
+
+The user's avatar (user.avatar_url). 
+
+Their name, followers, following count, and repository count. 
+
+A section (#repos) where their repositories will be added later. 
+
+main.innerHTML = cardHTML;: Displays the card in the main section of the page. 
+
+ 
+
+5. Displaying Error Messages 
+
+function createErrorCard(msg) { 
+
+  const cardHTML = ` 
+
+    <div class="card"> 
+
+      <h1>${msg}</h1> 
+
+    </div> 
+
+ `; 
+
+  main.innerHTML = cardHTML; 
+
+}  
+
+//Purpose: This function displays an error message on the page. 
+
+//msg: The error message to show (e.g., "No profile with this username"). 
+
+ 
+
+6. Adding Repositories 
+
+function addReposToCard(repos) { 
+
+  const reposEl = document.getElementById("repos"); 
+
+  const repoElements = repos.slice(0, 5).map((repo) => { 
+
+      const repoEl = document.createElement("a"); 
+
+      repoEl.classList.add("repo"); 
+
+      repoEl.href = repo.html_url; 
+
+      repoEl.target = "_blank"; 
+
+      repoEl.innerText = repo.name; 
+
+      return repoEl;  
+
+    }); 
+
+   
+
+  reposEl.append(...repoElements); 
+
+} 
+
+   
+
+ 
+
+// 
+
+1. Function Declaration: addReposToCard : takes one parameter, repos. 
+
+repos is expected to be a list (array) of repository objects, each containing information about a repository (e.g., name, URL). 
+
+ 
+
+2. Selecting the Parent Element: const reposEl = document.getElementById("repos");   
+
+-This selects the HTML element with the ID repos from the document and stores it in the variable reposEl. 
+
+-This element will act as the container where the repository links will be added. 
+
+ 
+
+3. Creating Repository Elements: 
+
+-repos.slice(0, 5): This takes the first 5 items from the repos array (ensuring no more than 5 repositories are processed). 
+
+-.map(...): This creates a new array by transforming each repository (repo) into a new DOM element (an anchor <a> tag). 
+
+The .map() function is used to transform an array by applying a callback function to each item in the array. It creates a new array containing the results of the callback function for each item. 
+
+ 
+
+4. Creating a Link for Each Repository 
+
+document.createElement("a"): Creates a new <a> (anchor) element for the repository. 
+
+repoEl.classList.add("repo"): Adds the CSS class repo to the <a> element for styling purposes. 
+
+repoEl.href = repo.html_url: Sets the hyperlink (href) of the <a> element to the URL of the repository (repo.html_url). 
+
+repoEl.target = "_blank": Makes the link open in a new browser tab. 
+
+repoEl.innerText = repo.name: Sets the text of the link to the repository's name (repo.name). 
+
+return repoEl: Sends the created <a> element back into the map array. 
+
+The return repoEl inside the map callback serves a very important purpose: it ensures that each <a> element (created for each repository) is included in the resulting array created by map.  
+
+ return repoEl is crucial because it tells map to include the newly created <a> element in the resulting array. 
+
+Input to map: The array of repositories (repos.slice(0, 5)). 
+
+Callback Transformation: For each repo, a new <a> element (repoEl) is created and customized. 
+
+return repoEl: This ensures that the <a> element is added to the new array being created by map. 
+
+The result is an array of <a> elements, stored in the repoElements variable. 
+
+5. Appending the Repository Links 
+
+reposEl.append(...repoElements); This line adds all the repository links to the repos container in one operation. 
+
+...repoElements: Spreads the array of <a> elements into individual elements. 
+
+ 
+
+reposEl.append(...): Appends all the created <a> elements as children to the reposEl container. 
+
+ 
+
+ 
+
+7. Handling the Form Submission 
+
+form.addEventListener("submit", (e) => { 
+
+  e.preventDefault(); 
+
+  const user = userSearched.value.trim(); 
+
+ if (user) { 
+
+ getUser(user); 
+
+ userSearched.value = ""; 
+
+} 
+
+});  
+
+//Purpose: This code listens for the form submission and fetches the user data. 
+
+(e) is the event object which is automatically passed to the event listener callback function when the event occurs.  
+
+It provides details about the event and methods to control it. 
+
+An event object is a special object provided by the browser when an event (like click, submit, keydown, etc.) occurs. It contains information about the event 
+
+ 
+
+e.preventDefault(): Prevents the form from reloading the page when submitted. 
+
+userSearched.value.trim(): Gets the username from the input field and removes any extra spaces. 
+
+If user is not empty: 
+
+Calls getUser(user) to fetch the user's profile. 
+
+Clears the input field (userSearched.value = ""). 
+
+ 
+
+Summary Flow 
+
+The user submits the form with a GitHub username. 
+
+getUser fetches the user's data and displays it using createUserCard. 
+
+getRepos fetches the user's repositories and displays them with addReposToCard. 
+
+If there’s an error (e.g., user not found), createErrorCard displays an error message. 
